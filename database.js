@@ -93,3 +93,107 @@ export const resetDatabase = async () => {
         return false;
     }
 };
+
+// Get database file path and info for external viewing
+export const getDatabaseInfo = async () => {
+    try {
+        const database = await getDB();
+
+        // Try multiple methods to get database path
+        let dbPath = 'Database path not directly accessible';
+
+        // Method 1: Check if path is accessible via _db
+        if (database._db?.path) {
+            dbPath = database._db.path;
+        }
+        // Method 2: Try to get from database object
+        else if (database.databaseName) {
+            dbPath = `App Documents/${database.databaseName}`;
+        }
+        // Method 3: Default Expo path info
+        else {
+            dbPath = 'Stored in app internal storage: todos.db';
+        }
+
+        // Get platform-specific information
+        const Platform = require('react-native').Platform;
+        let platformInfo = '';
+
+        if (Platform.OS === 'android') {
+            platformInfo = 'Android: /data/data/com.yourname.securetodo/databases/todos.db';
+        } else if (Platform.OS === 'ios') {
+            platformInfo = 'iOS: App Documents folder/todos.db';
+        } else {
+            platformInfo = 'Platform: ' + Platform.OS;
+        }
+
+        // Get table information
+        const tables = await database.getAllAsync("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name");
+
+        // Get database size info
+        const userCount = await database.getFirstAsync('SELECT COUNT(*) as count FROM users');
+        const todoCount = await database.getFirstAsync('SELECT COUNT(*) as count FROM todos');
+
+        // Get database file size (approximate)
+        const totalRecords = userCount.count + todoCount.count;
+        const estimatedSizeKB = Math.max(1, Math.ceil(totalRecords * 0.5)); // Rough estimate
+
+        return {
+            path: dbPath,
+            platformPath: platformInfo,
+            tables: tables.map(t => t.name),
+            stats: {
+                users: userCount.count,
+                todos: todoCount.count,
+                totalRecords: totalRecords,
+                estimatedSizeKB: estimatedSizeKB
+            },
+            filename: 'todos.db'
+        };
+    } catch (error) {
+        console.error('Error getting database info:', error);
+        return {
+            path: 'Unknown',
+            platformPath: 'Unknown platform',
+            tables: [],
+            stats: { users: 0, todos: 0, totalRecords: 0, estimatedSizeKB: 0 },
+            filename: 'todos.db'
+        };
+    }
+};// Export database as SQL dump (for backup/viewing)
+export const exportDatabaseAsSQL = async () => {
+    try {
+        const database = await getDB();
+
+        let sqlDump = '-- SQLite Database Export\n';
+        sqlDump += '-- Generated on: ' + new Date().toISOString() + '\n\n';
+
+        // Export table schemas
+        const tables = await database.getAllAsync("SELECT sql FROM sqlite_master WHERE type='table' ORDER BY name");
+        tables.forEach(table => {
+            if (table.sql) {
+                sqlDump += table.sql + ';\n\n';
+            }
+        });
+
+        // Export users data (without passwords for security)
+        sqlDump += '-- Users Data\n';
+        const users = await database.getAllAsync('SELECT id, username, email, createdAt FROM users');
+        users.forEach(user => {
+            sqlDump += `INSERT INTO users (id, username, email, createdAt) VALUES (${user.id}, '${user.username}', '${user.email}', '${user.createdAt}');\n`;
+        });
+        sqlDump += '\n';
+
+        // Export todos data
+        sqlDump += '-- Todos Data\n';
+        const todos = await database.getAllAsync('SELECT * FROM todos');
+        todos.forEach(todo => {
+            sqlDump += `INSERT INTO todos (id, userId, title, completed, createdAt) VALUES (${todo.id}, ${todo.userId}, '${todo.title.replace(/'/g, "''")}', ${todo.completed}, '${todo.createdAt}');\n`;
+        });
+
+        return sqlDump;
+    } catch (error) {
+        console.error('Error exporting database:', error);
+        return null;
+    }
+};
