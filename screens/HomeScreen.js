@@ -3,10 +3,12 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react
 import { useIsFocused } from '@react-navigation/native';
 import { getDB } from '../database';
 import { authService } from '../authService';
+import { userStatsService } from '../userStatsService';
 
 const HomeScreen = ({ navigation }) => {
     const [todos, setTodos] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [userCount, setUserCount] = useState(0);
     const isFocused = useIsFocused();
 
     // Load current user
@@ -70,10 +72,17 @@ const HomeScreen = ({ navigation }) => {
         );
     };
 
+    // Load user count
+    const loadUserCount = async () => {
+        const count = await userStatsService.getUserCount();
+        setUserCount(count);
+    };
+
     // Load data when screen focuses
     useEffect(() => {
         loadCurrentUser();
         loadTodos();
+        loadUserCount();
     }, [isFocused]);
 
     // Render each todo item
@@ -98,6 +107,13 @@ const HomeScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
+            {/* User Stats Header */}
+            {__DEV__ && (
+                <View style={styles.statsHeader}>
+                    <Text style={styles.statsText}>👥 {userCount} registered users</Text>
+                </View>
+            )}
+
             {todos.length === 0 ? (
                 <View style={styles.emptyState}>
                     <Text style={styles.emptyText}>No todos yet!</Text>
@@ -134,6 +150,18 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f8f9fa',
+    },
+    statsHeader: {
+        backgroundColor: '#e3f2fd',
+        padding: 8,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+    },
+    statsText: {
+        fontSize: 12,
+        color: '#1976d2',
+        fontWeight: '500',
     },
     list: {
         padding: 16,

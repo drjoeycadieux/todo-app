@@ -12,6 +12,8 @@ import { getDB, resetDatabase } from '../database';
 
 const DatabaseViewerScreen = ({ navigation }) => {
     const [dbData, setDbData] = useState([]);
+    const [userData, setUserData] = useState([]);
+    const [userCount, setUserCount] = useState(0);
     const [tableInfo, setTableInfo] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -24,11 +26,16 @@ const DatabaseViewerScreen = ({ navigation }) => {
             const todos = await db.getAllAsync('SELECT * FROM todos ORDER BY id DESC');
             setDbData(todos);
 
+            // Get all users (without passwords for security)
+            const users = await db.getAllAsync('SELECT id, username, email, createdAt FROM users ORDER BY id DESC');
+            setUserData(users);
+            setUserCount(users.length);
+
             // Get table schema information
             const schema = await db.getAllAsync('PRAGMA table_info(todos)');
             setTableInfo(schema);
 
-            console.log('Database data loaded:', todos);
+            console.log('Database data loaded - Todos:', todos.length, 'Users:', users.length);
         } catch (error) {
             console.error('Error loading database data:', error);
             Alert.alert('Error', 'Failed to load database data');
@@ -102,8 +109,9 @@ const DatabaseViewerScreen = ({ navigation }) => {
 
             {/* Data Count */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Records</Text>
-                <Text style={styles.recordCount}>Total Records: {dbData.length}</Text>
+                <Text style={styles.sectionTitle}>Database Statistics</Text>
+                <Text style={styles.recordCount}>📝 Total Todos: {dbData.length}</Text>
+                <Text style={styles.recordCount}>👥 Registered Users: {userCount}</Text>
             </View>
 
             {/* Data Table */}
@@ -133,6 +141,40 @@ const DatabaseViewerScreen = ({ navigation }) => {
                                 </Text>
                                 <Text style={[styles.tableCell, { flex: 2 }]} numberOfLines={1}>
                                     {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'N/A'}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
+            </View>
+
+            {/* Users Table */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Registered Users</Text>
+                {userData.length === 0 ? (
+                    <Text style={styles.noData}>No users registered</Text>
+                ) : (
+                    <View style={styles.tableContainer}>
+                        {/* Users Table Header */}
+                        <View style={styles.tableHeader}>
+                            <Text style={[styles.tableHeaderText, { flex: 1 }]}>ID</Text>
+                            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Username</Text>
+                            <Text style={[styles.tableHeaderText, { flex: 3 }]}>Email</Text>
+                            <Text style={[styles.tableHeaderText, { flex: 2 }]}>Registered</Text>
+                        </View>
+
+                        {/* Users Table Rows */}
+                        {userData.map((user, index) => (
+                            <View key={user.id} style={[styles.tableRow, index % 2 === 0 && styles.evenRow]}>
+                                <Text style={[styles.tableCell, { flex: 1 }]}>{user.id}</Text>
+                                <Text style={[styles.tableCell, { flex: 2 }]} numberOfLines={1}>
+                                    {user.username}
+                                </Text>
+                                <Text style={[styles.tableCell, { flex: 3 }]} numberOfLines={1}>
+                                    {user.email}
+                                </Text>
+                                <Text style={[styles.tableCell, { flex: 2 }]} numberOfLines={1}>
+                                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                                 </Text>
                             </View>
                         ))}
