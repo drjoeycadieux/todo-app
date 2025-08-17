@@ -35,7 +35,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "your-project-id-here"
+        "projectId": "securetodo-task-manager-2025"
       }
     }
   }
