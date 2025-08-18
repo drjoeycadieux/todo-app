@@ -35,10 +35,13 @@ const AddTodoScreen = ({ navigation }) => {
         <View style={styles.container}>
             <TextInput
                 style={styles.input}
-                placeholder="Enter todo title"
+                placeholder="Enter your todo description..."
                 value={title}
                 onChangeText={setTitle}
                 autoFocus
+                multiline={true}
+                numberOfLines={6}
+                textAlignVertical="top"
             />
             <Button title="Save" onPress={saveTodo} />
         </View>
@@ -52,13 +55,16 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     input: {
-        height: 50,
+        height: 150,
         borderWidth: 1,
         borderColor: '#ddd',
-        borderRadius: 5,
+        borderRadius: 8,
         paddingHorizontal: 15,
+        paddingVertical: 12,
         marginBottom: 20,
         backgroundColor: 'white',
+        fontSize: 16,
+        lineHeight: 22,
     },
 });
 
