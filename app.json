@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SecureTodo - Personal Task Manager",
-    "slug": "securetodo-task-manager",
+    "slug": "todo-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -35,8 +35,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "securetodo-task-manager-2025"
+        "projectId": "17911c78-9f1f-405b-bac0-365c9aa79ead"
       }
-    }
+    },
+    "owner": "joey-cadieux"
   }
 }
